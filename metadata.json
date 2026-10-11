@@ -1,0 +1,22 @@
+{
+  "name": "Qurp",
+  "description": "Lightweight VLESS/VMess/Trojan/Shadowsocks/Hysteria2 proxy client powered by sing-box.",
+  "version": 1,
+  "uuid": "qurp@gnome-shell-extension",
+  "shell-version": [
+    "46",
+    "47",
+    "48",
+    "49",
+    "50"
+  ],
+  "url": "https://github.com/1xpwn/qurp",
+  "license": "GPL-3.0",
+  "author": "MNM",
+  "settings-schema": "org.gnome.shell.extensions.qurp",
+  "version-name": "1.0.0",
+  "session-modes": [
+    "user",
+    "unlock-dialog"
+  ]
+}

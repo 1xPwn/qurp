@@ -1,0 +1,105 @@
+#!/usr/bin/env bash
+# Qurp privileged helper: kill switch (nftables). Runs as root via pkexec.
+# Usage:
+#   qurp-helper ks-on <ip[,ip...]> [tun-interface|-] [cidr[,cidr...]|-]
+#   qurp-helper ks-off
+# The rules are installed in ONE nft transaction: the old table is replaced atomically (there is no
+# moment without rules, and if the new rules are rejected the old ones stay in place).
+# cidr: explicit direct IP ranges (routing settings) that may leave outside the tunnel.
+# Plain DNS and DNS-over-TLS (ports 53 / 853) are dropped even towards LAN resolvers.
+set -euo pipefail
+
+TABLE="qurp_ks"
+IPV4_RE='^([0-9]{1,3}\.){3}[0-9]{1,3}$'
+IPV6_RE='^[0-9a-fA-F:]+$'
+
+valid_v4() {
+    local ip="$1" o
+    [[ "$ip" =~ $IPV4_RE ]] || return 1
+    local -a oct
+    IFS=. read -ra oct <<< "$ip"
+    for o in "${oct[@]}"; do
+        (( 10#$o <= 255 )) || return 1
+    done
+}
+
+valid_v6() {
+    [[ "$1" =~ $IPV6_RE && "$1" == *:*:* ]]
+}
+
+valid_cidr() {
+    local c="$1" base len
+    [[ "$c" == */* ]] || return 1
+    base="${c%/*}"; len="${c#*/}"
+    [[ "$len" =~ ^[0-9]{1,3}$ ]] || return 1
+    if valid_v4 "$base"; then
+        (( 10#$len <= 32 ))
+    elif valid_v6 "$base"; then
+        (( 10#$len <= 128 ))
+    else
+        return 1
+    fi
+}
+
+ks_off() {
+    nft delete table inet "$TABLE" 2>/dev/null || true
+}
+
+ks_on() {
+    local ips="${1:-}" iface="${2:--}" cidrs="${3:--}"
+    [[ -n "$ips" ]] || { echo "no server address given" >&2; exit 2; }
+    if [[ "$iface" != "-" && ! "$iface" =~ ^[A-Za-z0-9_.-]{1,15}$ ]]; then
+        echo "bad interface name" >&2; exit 2
+    fi
+
+    local v4=() v6=() c4=() c6=() ip c base
+    local -a list clist
+    IFS=',' read -ra list <<< "$ips"
+    for ip in "${list[@]}"; do
+        if valid_v4 "$ip"; then v4+=("$ip")
+        elif valid_v6 "$ip"; then v6+=("$ip")
+        else echo "bad address: $ip" >&2; exit 2
+        fi
+    done
+    (( ${#v4[@]} + ${#v6[@]} > 0 )) || { echo "no valid address" >&2; exit 2; }
+
+    if [[ "$cidrs" != "-" ]]; then
+        IFS=',' read -ra clist <<< "$cidrs"
+        for c in "${clist[@]}"; do
+            valid_cidr "$c" || { echo "bad range: $c" >&2; exit 2; }
+            base="${c%/*}"
+            if valid_v4 "$base"; then c4+=("$c"); else c6+=("$c"); fi
+        done
+    fi
+
+    join() { local IFS=,; echo "$*"; }
+
+    {
+        # add + delete + define in one batch = atomic replace, whether or not the table existed
+        echo "add table inet $TABLE"
+        echo "delete table inet $TABLE"
+        echo "table inet $TABLE {"
+        echo "  chain output {"
+        echo "    type filter hook output priority -10; policy accept;"
+        echo "    oifname \"lo\" accept"
+        if [[ "$iface" != "-" ]]; then echo "    oifname \"$iface\" accept"; fi
+        if (( ${#v4[@]} )); then echo "    ip daddr { $(join "${v4[@]}") } accept"; fi
+        if (( ${#v6[@]} )); then echo "    ip6 daddr { $(join "${v6[@]}") } accept"; fi
+        if (( ${#c4[@]} )); then echo "    ip daddr { $(join "${c4[@]}") } accept"; fi
+        if (( ${#c6[@]} )); then echo "    ip6 daddr { $(join "${c6[@]}") } accept"; fi
+        echo "    meta l4proto { tcp, udp } th dport { 53, 853 } counter drop"
+        echo "    ip daddr { 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 169.254.0.0/16 } accept"
+        echo "    ip6 daddr { fc00::/7, fe80::/10 } accept"
+        echo "    udp dport { 67, 68 } accept"
+        echo "    icmpv6 type { nd-neighbor-solicit, nd-neighbor-advert, nd-router-solicit, nd-router-advert } accept"
+        echo "    counter drop"
+        echo "  }"
+        echo "}"
+    } | nft -f -
+}
+
+case "${1:-}" in
+    ks-on)  ks_on "${2:-}" "${3:--}" "${4:--}" ;;
+    ks-off) ks_off ;;
+    *) echo "usage: qurp-helper ks-on <ips> [iface] [cidrs] | ks-off" >&2; exit 64 ;;
+esac

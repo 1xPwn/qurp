@@ -1,0 +1,8 @@
+# built / local files
+*.zip
+schemas/gschemas.compiled
+*.swp
+*~
+.vscode/
+.idea/
+node_modules/

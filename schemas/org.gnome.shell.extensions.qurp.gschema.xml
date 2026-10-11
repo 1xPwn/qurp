@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.qurp" path="/org/gnome/shell/extensions/qurp/">
+    <key name="language" type="s">
+      <default>"en"</default>
+      <summary>UI language</summary>
+      <description>en, fa, or zh</description>
+    </key>
+    <key name="toggle-position" type="s">
+      <default>"below-wifi"</default>
+      <summary>Quick Settings tile position</summary>
+      <description>below-wifi, after-wifi, start, end or custom</description>
+    </key>
+    <key name="tile-layout" type="s">
+      <default>"[]"</default>
+      <summary>Real Quick Settings tile order (written by the extension)</summary>
+      <description>JSON list of visible one-column tiles; q=1 marks the Qurp tile. Used by the preferences window.</description>
+    </key>
+    <key name="toggle-slot" type="i">
+      <default>2</default>
+      <summary>Quick Settings tile slot (custom position)</summary>
+      <description>Zero-based index among the visible Quick Settings tiles. Used when toggle-position is custom.</description>
+      <range min="0" max="20"/>
+    </key>
+    <key name="auto-connect" type="b">
+      <default>false</default>
+      <summary>Auto-connect on login</summary>
+    </key>
+    <key name="subscriptions" type="s">
+      <default>"[]"</default>
+      <summary>JSON array of subscriptions</summary>
+    </key>
+    <key name="last-server-id" type="s">
+      <default>""</default>
+      <summary>Last connected server id</summary>
+    </key>
+    <key name="exit-ip-check" type="b">
+      <default>true</default>
+      <summary>Verify exit IP after connect</summary>
+    </key>
+    <key name="kill-switch" type="b">
+      <default>false</default>
+      <summary>Kill switch (requires privileged helper)</summary>
+    </key>
+    <key name="dns-leak-protection" type="b">
+      <default>false</default>
+      <summary>Route DNS through tunnel</summary>
+    </key>
+    <key name="proxy-port" type="i">
+      <range min="1024" max="65535"/>
+      <default>2080</default>
+      <summary>Local mixed proxy port</summary>
+    </key>
+    <key name="ping-timeout" type="i">
+      <range min="500" max="15000"/>
+      <default>3000</default>
+      <summary>Ping timeout in ms</summary>
+    </key>
+    <key name="connection-mode" type="s">
+      <default>"proxy"</default>
+      <summary>Connection mode</summary>
+      <description>proxy (system proxy) or tun (all apps)</description>
+    </key>
+    <key name="ping-mode" type="s">
+      <default>"real"</default>
+      <summary>Latency test method</summary>
+      <description>real (through the proxy core) or tcp (plain TCP connect)</description>
+    </key>
+    <key name="sub-update-hours" type="i">
+      <range min="0" max="720"/>
+      <default>6</default>
+      <summary>Subscription auto-update interval in hours (0 = off)</summary>
+    </key>
+    <key name="tls-skip-verify" type="b">
+      <default>false</default>
+      <summary>Skip TLS certificate verification for every server</summary>
+    </key>
+    <key name="routing-preset" type="s">
+      <default>"global"</default>
+      <summary>Routing preset</summary>
+      <description>global or ir-bypass</description>
+    </key>
+    <key name="routing-direct-domains" type="s">
+      <default>""</default>
+      <summary>Domains that bypass the proxy (comma separated suffixes)</summary>
+    </key>
+    <key name="routing-direct-ips" type="s">
+      <default>""</default>
+      <summary>IPs / CIDRs that bypass the proxy (comma separated)</summary>
+    </key>
+    <key name="routing-block-domains" type="s">
+      <default>""</default>
+      <summary>Domains that are blocked (comma separated suffixes)</summary>
+    </key>
+    <key name="routing-direct-apps" type="s">
+      <default>""</default>
+      <summary>Process names that bypass the proxy (comma separated)</summary>
+    </key>
+    <key name="ping-probes" type="i">
+      <range min="1" max="5"/>
+      <default>2</default>
+      <summary>Latency probes per server (1 to 5)</summary>
+    </key>
+    <key name="ping-stale-minutes" type="i">
+      <range min="1" max="1440"/>
+      <default>10</default>
+      <summary>Latency results older than this are shown as stale and ignored by Best</summary>
+    </key>
+    <key name="latest-version" type="s">
+      <default>""</default>
+      <summary>Latest release tag seen on GitHub (empty = never checked)</summary>
+    </key>
+    <key name="last-version-check" type="x">
+      <default>0</default>
+      <summary>Unix time of the last successful version check</summary>
+    </key>
+    <key name="update-request" type="s">
+      <default>""</default>
+      <summary>Written by the settings window to ask the extension to update (subId|timestamp or all|timestamp)</summary>
+    </key>
+    <key name="pinned-servers" type="as">
+      <default>[]</default>
+      <summary>Pinned server ids</summary>
+    </key>
+    <key name="expanded-subs" type="as">
+      <default>[]</default>
+      <summary>Subscription groups that are expanded in the panel</summary>
+    </key>
+    <key name="auto-reconnect" type="b">
+      <default>true</default>
+      <summary>Reconnect automatically</summary>
+      <description>Reconnect when the core dies, the tunnel stops answering or the network changes</description>
+    </key>
+    <key name="auto-connect-best" type="b">
+      <default>false</default>
+      <summary>Auto-connect to the fastest server</summary>
+      <description>With auto-connect on: measure the servers at login and connect to the fastest one instead of the last used</description>
+    </key>
+    <key name="tls-fragment" type="b">
+      <default>false</default>
+      <summary>Fragment the TLS handshake</summary>
+      <description>Splits the ClientHello into several records to get past simple DPI filtering</description>
+    </key>
+    <key name="core-log-verbose" type="b">
+      <default>false</default>
+      <summary>Verbose core log</summary>
+      <description>Log every connection the core makes (destination domains included) into client.log. Off by default: it is your browsing history</description>
+    </key>
+    <key name="check-updates" type="b">
+      <default>true</default>
+      <summary>Check GitHub for new releases</summary>
+    </key>
+    <key name="dns-bootstrap" type="s">
+      <default>"1.1.1.1"</default>
+      <summary>Plain DNS server used before the tunnel is up (IP address)</summary>
+    </key>
+    <key name="dns-remote" type="s">
+      <default>"8.8.8.8"</default>
+      <summary>DNS server reached through the tunnel (IP address)</summary>
+    </key>
+    <key name="sub-user-agent" type="s">
+      <default>""</default>
+      <summary>User-Agent sent when downloading subscriptions (empty = Qurp default)</summary>
+    </key>
+  </schema>
+</schemalist>
