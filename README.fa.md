@@ -7,9 +7,9 @@
 
 > [English](README.md) | فارسی
 
-| نمای کلی | یک اشتراک باز |
-|---|---|
-| ![پنل Qurp، نمای کلی](IMG_4101.PNG) | ![پنل Qurp، یک اشتراک باز](IMG_4100.PNG) |
+![Qurp panel, overview](<Screenshot From 2026-10-11 06-39-31.png>)
+![Qurp panel, one subscription open](<Screenshot From 2026-10-11 06-37-13.png>)
+![When the qurp connected! ](<Screenshot From 2026-10-11 06-39-12.png>)
 
 ## امکانات
 
