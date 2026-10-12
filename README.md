@@ -7,8 +7,8 @@ A Linux extension for **GNOME Shell**, built into the Quick Settings panel and p
 
 | Overview | A subscription open |
 |---|---|
-| ![Qurp panel, overview](IMG_4101.PNG) | ![Qurp panel, one subscription open](IMG_4100.PNG) |
-
+| ![Qurp panel, overview](<Screenshot From 2026-10-11 06-39-31.png>) | ![Qurp panel, one subscription open](<Screenshot From 2026-10-11 06-37-13.png>) | 
+![When the qurp connected! ](<Screenshot From 2026-10-11 06-39-12.png>)
 ## Features
 
 - **Protocols:** VLESS (TCP, WebSocket, gRPC, HTTP/2, HTTPUpgrade; TLS and Reality), VMess, Trojan,
