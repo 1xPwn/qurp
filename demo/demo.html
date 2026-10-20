@@ -1,0 +1,866 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Qurp — demo</title>
+<style>
+  :root{
+    --green:#2ec27e;
+    --green-2:#57e389;
+    --green-3:#8ff0b0;
+    --red:#ff7b7b;
+    --amber:#f5c451;
+    --text:#ffffff;
+    --muted:rgba(255,255,255,.62);
+    --panel:rgba(33,33,36,.94);
+    --line:rgba(255,255,255,.09);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:1600px;height:900px;overflow:hidden;background:#000}
+  body{
+    font-family:Cantarell,"Noto Sans","DejaVu Sans",sans-serif;
+    color:var(--text);
+    -webkit-font-smoothing:antialiased;
+    text-rendering:geometricPrecision;
+  }
+  #stage{position:relative;width:1600px;height:900px;overflow:hidden;background:#0b0712}
+  .ic{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .fill{fill:currentColor;stroke:none}
+
+  /* ---------- background ---------- */
+  #bg{
+    position:absolute;inset:-7%;
+    background:url("backdrop.jpg") center/cover no-repeat;
+    filter:brightness(.67) saturate(1.06) blur(1.2px);
+    transform:scale(1.06);
+  }
+  #bg-tint{
+    position:absolute;inset:0;
+    background:
+      radial-gradient(900px 700px at 72% 42%, rgba(46,194,126,.10), transparent 62%),
+      linear-gradient(90deg, rgba(9,5,15,.90) 0%, rgba(9,5,15,.62) 34%, rgba(9,5,15,.18) 64%, rgba(9,5,15,.05) 100%),
+      linear-gradient(0deg, rgba(7,4,12,.74) 0%, rgba(7,4,12,0) 42%),
+      linear-gradient(180deg, rgba(7,4,12,.50) 0%, rgba(7,4,12,0) 22%);
+  }
+  .aurora{position:absolute;border-radius:50%;filter:blur(110px);pointer-events:none}
+  #aurora-a{width:980px;height:980px;left:-330px;top:-300px;background:radial-gradient(circle,rgba(46,194,126,.30),rgba(46,194,126,0) 68%)}
+  #aurora-b{width:760px;height:760px;right:-220px;top:60px;background:radial-gradient(circle,rgba(87,227,137,.18),rgba(87,227,137,0) 68%)}
+  #aurora-c{width:900px;height:700px;left:-260px;bottom:-380px;background:radial-gradient(circle,rgba(238,90,60,.18),rgba(238,90,60,0) 68%)}
+  #vignette{
+    position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(ellipse at 50% 48%, transparent 42%, rgba(0,0,0,.45) 100%);
+  }
+  #grain{position:absolute;inset:0;opacity:.05;mix-blend-mode:overlay;pointer-events:none}
+  #particles{position:absolute;inset:0;pointer-events:none}
+  .pt{position:absolute;width:2px;height:2px;border-radius:50%;background:#bfffd8;box-shadow:0 0 6px rgba(87,227,137,.6)}
+
+  /* ---------- top bar ---------- */
+  #topbar{
+    position:absolute;left:0;right:0;top:0;height:29px;
+    display:flex;align-items:center;gap:14px;
+    padding:0 15px;
+    background:rgba(0,0,0,.48);
+    border-bottom:1px solid rgba(255,255,255,.06);
+    font-size:11.5px;color:rgba(255,255,255,.92);
+    z-index:4;
+  }
+  #tb-activities{
+    height:19px;padding:0 11px;border:1px solid rgba(255,255,255,.14);border-radius:11px;
+    display:flex;align-items:center;font-size:10.5px;color:rgba(255,255,255,.8)
+  }
+  #tb-clock{flex:1;text-align:center;font-weight:600;letter-spacing:.15px;font-size:11.5px}
+  #tb-icons{display:flex;align-items:center;gap:9px;color:rgba(255,255,255,.86)}
+  #tb-icons svg{width:13px;height:13px}
+  #tb-pill{width:19px;height:19px;border-radius:50%;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center}
+
+  /* ---------- intro ---------- */
+  #intro{position:absolute;left:112px;top:238px;width:820px;z-index:3}
+  #eyebrow{display:flex;align-items:center;gap:10px;font-size:11.5px;font-weight:700;letter-spacing:.22em;color:rgba(255,255,255,.58)}
+  #eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--green-2);box-shadow:0 0 12px rgba(87,227,137,.9)}
+  #brandline{display:flex;align-items:center;gap:22px;margin-top:20px}
+  #intro-logo{width:96px;height:96px;flex:0 0 96px;filter:drop-shadow(0 10px 32px rgba(46,194,126,.36))}
+  #intro-word{font-size:122px;line-height:.92;font-weight:800;letter-spacing:-5px;text-shadow:0 12px 50px rgba(0,0,0,.38)}
+  #tagline{margin-top:22px;font-size:33px;line-height:1.26;font-weight:500;letter-spacing:-.5px;color:rgba(255,255,255,.93);max-width:660px}
+  #tagline em{font-style:normal;color:var(--green-3)}
+  #chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:28px}
+  .chip{
+    height:29px;padding:0 12px;border-radius:15px;
+    display:flex;align-items:center;
+    border:1px solid rgba(255,255,255,.14);
+    background:rgba(255,255,255,.05);
+    font-size:11px;font-weight:600;letter-spacing:.02em;color:rgba(255,255,255,.78)
+  }
+  .chip.hot{border-color:rgba(87,227,137,.35);background:rgba(46,194,126,.09);color:var(--green-3)}
+  #meta{margin-top:22px;font-size:11.5px;color:rgba(255,255,255,.42);letter-spacing:.03em}
+  #meta b{color:rgba(255,255,255,.65);font-weight:600}
+
+  /* ---------- caption ---------- */
+  #caption{position:absolute;left:112px;bottom:103px;z-index:3;opacity:0;max-width:600px}
+  .cap-kicker{display:flex;align-items:center;gap:12px}
+  #cap-num{font-size:12px;font-weight:700;letter-spacing:.16em;color:var(--green-2)}
+  .cap-line{width:48px;height:1px;background:linear-gradient(90deg,rgba(87,227,137,.65),rgba(87,227,137,0))}
+  #cap-text{margin-top:12px;font-size:38px;line-height:1.14;font-weight:700;letter-spacing:-1px;text-shadow:0 3px 24px rgba(0,0,0,.35)}
+
+  /* ---------- panel ---------- */
+  #panel{
+    position:absolute;top:44px;right:44px;width:460px;height:400px;
+    border-radius:28px;
+    background:var(--panel);
+    border:1px solid rgba(255,255,255,.10);
+    box-shadow:0 50px 110px rgba(0,0,0,.66), 0 8px 28px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.06);
+    overflow:hidden;
+    transform-origin:top right;
+    z-index:5;
+  }
+  #panel::after{
+    content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+    background:linear-gradient(135deg,rgba(255,255,255,.055),rgba(255,255,255,0) 38%);
+  }
+  .layer{position:absolute;inset:0;padding:16px}
+
+  /* quick settings */
+  #qs{display:flex;flex-direction:column;gap:10px}
+  .qs-top{height:40px;display:flex;align-items:center;justify-content:space-between;padding:0 2px}
+  .qs-tools{display:flex;align-items:center;gap:8px}
+  .round{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.08)}
+  .round svg{width:17px;height:17px;color:rgba(255,255,255,.85)}
+  .volume{height:34px;display:flex;align-items:center;gap:11px;padding:0 4px}
+  .volume svg{width:16px;height:16px;color:rgba(255,255,255,.82)}
+  .vol-track{position:relative;flex:1;height:3px;border-radius:3px;background:rgba(255,255,255,.18)}
+  .vol-fill{position:absolute;left:0;top:0;bottom:0;width:72%;border-radius:3px;background:rgba(255,255,255,.82)}
+  .vol-knob{position:absolute;left:calc(72% - 7px);top:50%;width:14px;height:14px;margin-top:-7px;border-radius:50%;background:#fff;box-shadow:0 1px 5px rgba(0,0,0,.45)}
+  .toggle-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .toggle{
+    height:56px;border-radius:16px;padding:0 11px;
+    display:flex;align-items:center;gap:9px;
+    background:rgba(255,255,255,.085);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.04);
+  }
+  .toggle.active{
+    background:linear-gradient(180deg,#32c27c 0%,#28a965 100%);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.28), 0 2px 8px rgba(0,0,0,.18);
+  }
+  .ticon{width:28px;height:28px;flex:0 0 28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.15)}
+  .ticon svg{width:15px;height:15px}
+  .toggle .tt{display:flex;flex-direction:column;min-width:0;gap:1px}
+  .toggle b{font-size:12.8px;line-height:1.1;font-weight:700;white-space:nowrap}
+  .toggle span{font-size:9.8px;line-height:1.15;color:rgba(255,255,255,.72);white-space:nowrap}
+  .toggle .chev{margin-left:auto;color:rgba(255,255,255,.72)}
+  .toggle .chev svg{width:13px;height:13px}
+  .wide{height:46px;border-radius:15px;padding:0 14px;gap:10px}
+  .wide .ticon{width:24px;height:24px;flex-basis:24px;background:transparent}
+  .wide b{font-size:12.5px}
+
+  /* qurp panel */
+  #qurp{display:flex;flex-direction:column;gap:10px}
+  .q-head{height:46px;display:flex;align-items:center;gap:11px}
+  .logo-circle{
+    width:44px;height:44px;border-radius:50%;flex:0 0 44px;
+    display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(145deg,#39c77f 0%,#238e57 100%);
+    box-shadow:0 5px 18px rgba(46,194,126,.28), inset 0 1px 0 rgba(255,255,255,.28);
+  }
+  .logo-circle svg{width:25px;height:25px;color:#fff}
+  .q-head h2{font-size:18px;line-height:1.05;font-weight:800;letter-spacing:-.2px}
+  .q-head p{font-size:10.5px;line-height:1.3;color:rgba(255,255,255,.55);margin-top:2px}
+  .q-head .q-live{margin-left:auto;font-size:9px;font-weight:700;letter-spacing:.1em;color:var(--green-3);opacity:0;display:flex;align-items:center;gap:5px}
+  .q-head .q-live i{width:5px;height:5px;border-radius:50%;background:var(--green-2);box-shadow:0 0 8px var(--green-2)}
+  .hero{
+    position:relative;height:84px;border-radius:17px;padding:11px 12px;
+    display:flex;align-items:center;gap:10px;
+    background:linear-gradient(135deg,rgba(46,194,126,.10),rgba(255,255,255,.035) 62%);
+    border:1px solid rgba(87,227,137,.27);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.05);
+    overflow:hidden;
+  }
+  .hero-glow{position:absolute;inset:0;background:radial-gradient(220px 100px at 18% 50%,rgba(87,227,137,.22),transparent 70%);opacity:.55;pointer-events:none}
+  .hero-shield{
+    width:38px;height:38px;flex:0 0 38px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(46,194,126,.14);border:1px solid rgba(87,227,137,.22);
+  }
+  .hero-shield svg{width:22px;height:22px;color:var(--green-3)}
+  .hero-main{min-width:0;flex:1}
+  .hero-name{display:flex;align-items:center;gap:7px;font-size:14.5px;font-weight:700;line-height:1.1;letter-spacing:-.1px}
+  .flag{font-family:"Noto Color Emoji","Apple Color Emoji",sans-serif;font-size:15px;line-height:1}
+  .hero-meta{margin-top:4px;font-size:10.5px;color:rgba(255,255,255,.55);font-variant-numeric:tabular-nums}
+  .hero-meta b{color:rgba(255,255,255,.82);font-weight:600}
+  .hero-ip{margin-top:2px;font-size:10px;color:rgba(255,255,255,.40);font-family:"Cantarell",sans-serif;display:flex;align-items:center;gap:5px;font-variant-numeric:tabular-nums}
+  .hero-ip svg{width:10px;height:10px;opacity:.5}
+  #connect-btn{
+    width:88px;height:33px;flex:0 0 88px;border-radius:17px;
+    display:flex;align-items:center;justify-content:center;gap:6px;
+    background:rgba(255,255,255,.10);
+    border:1px solid rgba(87,227,137,.34);
+    color:var(--green-3);
+    font-family:inherit;font-size:10.8px;font-weight:700;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.08);
+    overflow:hidden;
+  }
+  #spinner{width:11px;height:11px;border-radius:50%;border:1.6px solid rgba(255,255,255,.28);border-top-color:var(--green-3);border-right-color:rgba(143,240,176,.22);border-bottom-color:rgba(143,240,176,.22);border-left-color:rgba(143,240,176,.22);display:none}
+  .searchrow{height:34px;display:flex;align-items:center;gap:7px}
+  .searchbox{
+    flex:1;height:32px;border-radius:10px;background:rgba(255,255,255,.07);
+    display:flex;align-items:center;gap:7px;padding:0 10px;
+    color:rgba(255,255,255,.42);font-size:11px;
+  }
+  .searchbox svg{width:13px;height:13px}
+  .tool{
+    width:32px;height:32px;border-radius:9px;background:rgba(255,255,255,.07);
+    display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.68)
+  }
+  .tool svg{width:13px;height:13px}
+  .subs-label{font-size:9px;font-weight:700;letter-spacing:.14em;color:rgba(255,255,255,.38);padding-left:2px}
+  .subhead{
+    height:48px;border-radius:12px;padding:0 9px;
+    display:flex;align-items:center;gap:8px;
+    background:rgba(255,255,255,.045);
+    border:1px solid rgba(255,255,255,.055);
+  }
+  .chevbtn{width:15px;height:15px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.5)}
+  .chevbtn svg{width:12px;height:12px;transform:rotate(90deg)}
+  .subdot{width:6px;height:6px;border-radius:50%;background:var(--green-2);box-shadow:0 0 8px rgba(87,227,137,.6);flex:0 0 6px}
+  .subname{font-size:11.5px;font-weight:700;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .submeta{font-size:9px;color:rgba(255,255,255,.38);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  .subhead .mini{margin-left:auto;display:flex;align-items:center;gap:5px;color:rgba(255,255,255,.38)}
+  .subhead .mini svg{width:13px;height:13px}
+  .subhead .mini span{font-size:8.5px}
+  .servers{position:relative;flex:1;min-height:0;display:flex;flex-direction:column;gap:1px;padding-right:2px}
+  .server{height:37px;flex:0 0 37px;border-radius:9px;display:flex;align-items:center;gap:8px;padding:0 6px;position:relative}
+  .server .radio{width:14px;height:14px;flex:0 0 14px;border-radius:50%;border:1.5px solid rgba(255,255,255,.28);position:relative}
+  .server .radio::after{content:"";position:absolute;inset:3px;border-radius:50%;background:transparent}
+  .server.selected .radio{border-color:var(--green-2)}
+  .server.selected .radio::after{background:var(--green-2);box-shadow:0 0 8px rgba(87,227,137,.6)}
+  .server .flag{width:19px;flex:0 0 19px;font-size:13.5px}
+  .server .sname{flex:1;min-width:0;font-size:12.4px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:rgba(255,255,255,.82)}
+  .server.selected .sname{color:#fff}
+  .proto{font-size:8px;font-weight:700;letter-spacing:.04em;color:rgba(255,255,255,.58);border:1px solid rgba(255,255,255,.16);border-radius:4px;padding:2px 4px;white-space:nowrap}
+  .lat{width:46px;text-align:right;font-size:10px;color:rgba(255,255,255,.48);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .server.selected .lat{color:rgba(255,255,255,.8)}
+  .star{width:13px;flex:0 0 13px;color:rgba(255,255,255,.22)}
+  .star svg{width:12px;height:12px;fill:currentColor;stroke:none}
+  .scrollbar{position:absolute;right:-2px;top:4px;bottom:4px;width:3px;border-radius:3px;background:rgba(255,255,255,.055)}
+  .scrollbar i{position:absolute;left:0;top:0;width:3px;height:38%;border-radius:3px;background:rgba(255,255,255,.24)}
+  .q-foot{height:34px;display:flex;align-items:center;gap:7px;padding-top:2px}
+  .ver{height:22px;padding:0 9px;border-radius:11px;border:1px solid rgba(87,227,137,.28);background:rgba(46,194,126,.07);display:flex;align-items:center;gap:5px;font-size:9px;font-weight:700;color:var(--green-3)}
+  .ver i{width:5px;height:5px;border-radius:50%;background:var(--green-2)}
+  .gbtn{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.06);color:rgba(255,255,255,.4)}
+  .gbtn svg{width:12px;height:12px}
+  .settings{margin-left:auto;height:28px;padding:0 10px;border-radius:9px;background:rgba(255,255,255,.09);display:flex;align-items:center;gap:6px;font-size:9.5px;font-weight:600;color:rgba(255,255,255,.8)}
+  .settings svg{width:12px;height:12px}
+
+  /* ---------- feature callouts ---------- */
+  #features{position:absolute;left:112px;top:166px;width:650px;z-index:3;opacity:0}
+  #feat-kicker{display:flex;align-items:center;gap:10px;font-size:10.5px;font-weight:700;letter-spacing:.2em;color:var(--green-2)}
+  #feat-kicker .ln{width:42px;height:1px;background:rgba(87,227,137,.4)}
+  #feat-title{margin-top:14px;font-size:39px;line-height:1.12;font-weight:800;letter-spacing:-1.2px;max-width:560px}
+  #feat-list{margin-top:28px;display:flex;flex-direction:column;gap:10px}
+  .feat{
+    width:590px;height:76px;border-radius:16px;padding:0 14px;
+    display:flex;align-items:center;gap:12px;
+    background:rgba(18,17,23,.74);
+    border:1px solid rgba(255,255,255,.10);
+    box-shadow:0 12px 30px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.04);
+  }
+  .feat .fic{width:38px;height:38px;flex:0 0 38px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:rgba(46,194,126,.12);border:1px solid rgba(87,227,137,.22);color:var(--green-3)}
+  .feat .fic svg{width:19px;height:19px}
+  .feat h3{font-size:18px;font-weight:700;letter-spacing:-.1px;line-height:1.2}
+  .feat p{font-size:13px;color:rgba(255,255,255,.52);margin-top:3px;line-height:1.2}
+  .feat .fnum{margin-left:auto;font-size:10px;font-weight:700;letter-spacing:.1em;color:rgba(255,255,255,.22)}
+
+  /* ---------- finale ---------- */
+  #finale{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:6;opacity:0}
+  #launch{
+    position:relative;width:940px;padding:42px 52px 38px;border-radius:34px;text-align:center;
+    background:linear-gradient(180deg,rgba(23,22,28,.76),rgba(13,12,17,.70));
+    border:1px solid rgba(255,255,255,.13);
+    box-shadow:0 50px 120px rgba(0,0,0,.55), 0 0 110px rgba(46,194,126,.10), inset 0 1px 0 rgba(255,255,255,.08);
+    overflow:hidden;
+  }
+  #end-logo{width:92px;height:92px;margin:0 auto;filter:drop-shadow(0 14px 38px rgba(46,194,126,.34))}
+  #end-word{margin-top:14px;font-size:86px;line-height:.92;font-weight:800;letter-spacing:-4px}
+  #end-tag{margin-top:14px;font-size:26px;font-weight:500;letter-spacing:-.3px;color:rgba(255,255,255,.80)}
+  #end-tag em{font-style:normal;color:var(--green-3);font-weight:700}
+  #install{
+    margin:28px auto 0;height:54px;width:590px;border-radius:15px;
+    display:flex;align-items:center;gap:12px;padding:0 7px 0 16px;
+    background:rgba(0,0,0,.34);border:1px solid rgba(255,255,255,.11);
+    text-align:left;
+  }
+  #install .lbl{font-size:9px;font-weight:800;letter-spacing:.16em;color:var(--green-2)}
+  #install .cmd{font-family:"DejaVu Sans Mono","Noto Sans Mono",monospace;font-size:13px;color:rgba(255,255,255,.84);white-space:nowrap}
+  #install .copy{margin-left:auto;width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,.09);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.6)}
+  #install .copy svg{width:15px;height:15px}
+  #end-url{margin-top:18px;font-size:15.5px;font-weight:600;color:rgba(255,255,255,.9);letter-spacing:.01em}
+  #end-url .slash{color:var(--green-2)}
+  #end-badges{margin-top:20px;display:flex;align-items:center;justify-content:center;gap:8px}
+  .badge{height:27px;padding:0 11px;border-radius:14px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.045);display:flex;align-items:center;gap:6px;font-size:10px;font-weight:600;color:rgba(255,255,255,.55)}
+  .badge svg{width:12px;height:12px}
+  .badge.green{border-color:rgba(87,227,137,.26);color:var(--green-3);background:rgba(46,194,126,.07)}
+
+  /* ---------- cursor ---------- */
+  #brand-ghost{
+    position:absolute;left:1050px;top:190px;width:500px;height:500px;
+    color:rgba(120,235,170,.085);opacity:0;pointer-events:none;
+    filter:drop-shadow(0 0 50px rgba(46,194,126,.10));
+  }
+  #brand-ghost svg{width:100%;height:100%}
+  #fade{position:absolute;inset:0;background:#08060c;z-index:30;pointer-events:none;opacity:1}
+
+  #cursor{position:absolute;left:0;top:0;width:26px;height:32px;z-index:20;opacity:0;filter:drop-shadow(0 3px 5px rgba(0,0,0,.55));transform-origin:2px 2px;pointer-events:none}
+  #cursor svg{width:26px;height:32px}
+  #ripple{position:absolute;left:0;top:0;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;border:2px solid rgba(87,227,137,.95);box-shadow:0 0 24px rgba(87,227,137,.55), inset 0 0 16px rgba(87,227,137,.25);z-index:19;opacity:0;pointer-events:none}
+  #connect-flash{position:absolute;inset:0;z-index:2;pointer-events:none;opacity:0;background:radial-gradient(600px 500px at 84% 48%,rgba(87,227,137,.25),rgba(87,227,137,0) 70%);mix-blend-mode:screen}
+  #ring{position:absolute;z-index:6;border-radius:50%;border:1px solid rgba(87,227,137,.55);pointer-events:none;opacity:0}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="bg"></div>
+  <div id="bg-tint"></div>
+  <div id="aurora-a" class="aurora"></div>
+  <div id="aurora-b" class="aurora"></div>
+  <div id="aurora-c" class="aurora"></div>
+  <div id="particles"></div>
+  <div id="vignette"></div>
+  <svg id="grain"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter><rect width="100%" height="100%" filter="url(#noise)"/></svg>
+  <div id="connect-flash"></div>
+
+  <!-- top bar -->
+  <div id="topbar">
+    <div id="tb-activities">Activities</div>
+    <div id="tb-clock">Tue Oct 20&nbsp;&nbsp;2:46 AM</div>
+    <div id="tb-icons">
+      <svg class="ic" viewBox="0 0 24 24"><path d="M4 9h16M4 15h16"/><circle cx="8" cy="9" r="1" fill="currentColor"/><circle cx="16" cy="15" r="1" fill="currentColor"/></svg>
+      <svg class="ic" viewBox="0 0 24 24"><path d="M4 10v4h4l5 4V6L8 10H4Z"/><path d="M17 9a4 4 0 0 1 0 6"/></svg>
+      <svg class="ic" viewBox="0 0 24 24"><rect x="3" y="7" width="16" height="10" rx="2"/><path d="M22 10v4"/><rect x="5" y="9" width="11" height="6" rx="1" fill="currentColor" stroke="none"/></svg>
+      <div id="tb-pill">
+        <svg class="ic" viewBox="0 0 24 24" style="width:12px;height:12px"><path d="M12 3v9"/><path d="M6.5 6.5a8 8 0 1 0 11 0"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- intro -->
+  <div id="intro">
+    <div id="eyebrow"><span class="dot"></span><span>GNOME SHELL EXTENSION</span></div>
+    <div id="brandline">
+      <div id="intro-logo">
+        <svg viewBox="0 0 100 100">
+          <defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#42d287"/><stop offset="1" stop-color="#218a52"/></linearGradient></defs>
+          <circle cx="50" cy="50" r="48" fill="url(#lg)"/>
+          <circle cx="50" cy="50" r="48" fill="none" stroke="rgba(255,255,255,.28)" stroke-width="1.5"/>
+          <g fill="none" stroke="#fff" stroke-width="5.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M50 23c7.7 4.2 16 5.8 24.5 5.8v20.8c0 14.8-10.2 24.7-24.5 30.6C35.7 74.3 25.5 64.4 25.5 49.6V28.8C34 28.8 42.3 27.2 50 23Z"/>
+            <circle cx="50" cy="57.5" r="5" fill="#fff" stroke="none"/>
+            <path d="M33 68.2h34"/>
+            <path d="M50 62.5v5.7"/>
+          </g>
+        </svg>
+      </div>
+      <div id="intro-word">Qurp</div>
+    </div>
+    <div id="tagline">A proxy client that lives<br>in your <em>Quick Settings.</em></div>
+    <div id="chips">
+      <div class="chip hot">sing-box</div>
+      <div class="chip">VLESS</div>
+      <div class="chip">VMess</div>
+      <div class="chip">Trojan</div>
+      <div class="chip">Shadowsocks</div>
+      <div class="chip">Hysteria2</div>
+    </div>
+    <div id="meta"><b>GNOME 46–50</b> &nbsp;·&nbsp; TUN &amp; system proxy &nbsp;·&nbsp; kill switch &nbsp;·&nbsp; GPL-3.0</div>
+  </div>
+
+  <!-- caption -->
+  <div id="caption">
+    <div class="cap-kicker"><span id="cap-num">01</span><span class="cap-line"></span></div>
+    <div id="cap-text">Lives in Quick Settings</div>
+  </div>
+
+  <!-- panel -->
+  <div id="panel">
+    <!-- quick settings layer -->
+    <div id="qs" class="layer">
+      <div class="qs-top">
+        <div class="qs-tools">
+          <div class="round"><svg class="ic" viewBox="0 0 24 24"><circle cx="6" cy="6" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="6" r="1.5" fill="currentColor" stroke="none"/><circle cx="18" cy="6" r="1.5" fill="currentColor" stroke="none"/><circle cx="6" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="18" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="6" cy="18" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="18" r="1.5" fill="currentColor" stroke="none"/><circle cx="18" cy="18" r="1.5" fill="currentColor" stroke="none"/></svg></div>
+          <div class="round"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg></div>
+        </div>
+        <div class="qs-tools">
+          <div class="round"><svg class="ic" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
+          <div class="round"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3v9"/><path d="M6.5 6.5a8 8 0 1 0 11 0"/></svg></div>
+        </div>
+      </div>
+      <div class="volume">
+        <svg class="ic" viewBox="0 0 24 24"><path d="M4 10v4h4l5 4V6L8 10H4Z"/><path d="M17 9a4 4 0 0 1 0 6"/></svg>
+        <div class="vol-track"><div class="vol-fill"></div><div class="vol-knob"></div></div>
+      </div>
+      <div class="toggle-grid">
+        <div class="toggle active">
+          <div class="ticon"><svg class="ic" viewBox="0 0 24 24"><rect x="4" y="8" width="12" height="8" rx="1.5"/><path d="M16 11h4v2h-4"/><path d="M7 12h3"/></svg></div>
+          <div class="tt"><b>Wired</b></div>
+          <div class="chev"><svg class="ic" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></div>
+        </div>
+        <div class="toggle">
+          <div class="ticon"><svg class="ic" viewBox="0 0 24 24"><path d="M20 4C10.5 4 4 9.4 4 16.2 4 18.3 5.4 20 7.5 20 14.2 20 20 13.3 20 4Z"/><path d="M4.5 19.5C7 15 11 12 16 10"/></svg></div>
+          <div class="tt"><b>Power Mode</b><span>Balanced</span></div>
+          <div class="chev"><svg class="ic" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></div>
+        </div>
+        <div class="toggle" id="qurp-toggle">
+          <div class="ticon"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3c1.7.9 3.5 1.2 5 1.2v4.4c0 3.8-2.2 6.4-5 7.8-2.8-1.4-5-4-5-7.8V4.2C8.5 4.2 10.3 3.9 12 3Z"/><circle cx="12" cy="10" r="1.2" fill="currentColor" stroke="none"/><path d="M8 13.2h8"/></svg></div>
+          <div class="tt"><b>Qurp</b><span id="qs-state">Off</span></div>
+          <div class="chev"><svg class="ic" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></div>
+        </div>
+        <div class="toggle active">
+          <div class="ticon"><svg class="ic" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z"/></svg></div>
+          <div class="tt"><b>Dark Style</b></div>
+        </div>
+      </div>
+      <div class="toggle wide">
+        <div class="ticon"><svg class="ic" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z"/><path d="M10 21h4"/><path d="m3 3 18 18"/></svg></div>
+        <div class="tt"><b>Do Not Disturb</b></div>
+      </div>
+    </div>
+
+    <!-- qurp detail layer -->
+    <div id="qurp" class="layer">
+      <div class="q-head">
+        <div class="logo-circle">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3c1.7.9 3.5 1.2 5 1.2v4.4c0 3.8-2.2 6.4-5 7.8-2.8-1.4-5-4-5-7.8V4.2C8.5 4.2 10.3 3.9 12 3Z"/>
+            <circle cx="12" cy="10" r="1.2" fill="currentColor" stroke="none"/>
+            <path d="M8 13.2h8"/>
+            <path d="M12 11.3v1.9"/>
+          </svg>
+        </div>
+        <div>
+          <h2>Qurp</h2>
+          <p>Proxy client</p>
+        </div>
+        <div class="q-live" id="q-live"><i></i><span>LIVE</span></div>
+      </div>
+
+      <div class="hero" id="hero">
+        <div class="hero-glow" id="hero-glow"></div>
+        <div class="hero-shield">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3c1.7.9 3.5 1.2 5 1.2v4.4c0 3.8-2.2 6.4-5 7.8-2.8-1.4-5-4-5-7.8V4.2C8.5 4.2 10.3 3.9 12 3Z"/>
+            <circle cx="12" cy="10" r="1.2" fill="currentColor" stroke="none"/>
+            <path d="M8 13.2h8"/>
+          </svg>
+        </div>
+        <div class="hero-main">
+          <div class="hero-name"><span class="flag" id="hero-flag">🇳🇱</span><span id="hero-country">Netherlands</span></div>
+          <div class="hero-meta"><b id="hero-lat">628 ms</b> &nbsp;·&nbsp; <span id="hero-speed">0 B/s</span></div>
+          <div class="hero-ip"><span id="hero-ip">212.80.221.168</span><svg class="ic" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg></div>
+        </div>
+        <div id="connect-btn"><span id="spinner"></span><span id="connect-label">Connect</span></div>
+      </div>
+
+      <div class="searchrow">
+        <div class="searchbox"><svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span>Search servers</span></div>
+        <div class="tool"><svg class="ic" viewBox="0 0 24 24"><path d="m7 5 5 7-5 7"/><path d="m13 5 5 7-5 7"/></svg></div>
+        <div class="tool"><svg class="ic" viewBox="0 0 24 24"><path d="M3 12h4l2-4 4 8 2-4h6"/></svg></div>
+        <div class="tool"><svg class="ic" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg></div>
+      </div>
+
+      <div class="subs-label">SUBSCRIPTIONS &nbsp;·&nbsp; 2</div>
+
+      <div class="subhead">
+        <div class="chevbtn"><svg class="ic" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></div>
+        <div class="subdot"></div>
+        <div style="min-width:0;display:flex;flex-direction:column;gap:2px">
+          <div class="subname">Sub 1</div>
+          <div class="submeta">57.3 MB / 30.0 GB &nbsp;·&nbsp; 28d left &nbsp;·&nbsp; 1h ago</div>
+        </div>
+        <div class="mini">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>
+          <svg class="ic" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg>
+        </div>
+      </div>
+
+      <div class="servers" id="servers">
+        <div class="server" data-i="0">
+          <div class="radio"></div><div class="flag">🇳🇱</div><div class="sname">Netherlands</div><div class="proto">VMESS</div><div class="lat">598 ms</div><div class="star"><svg viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3Z"/></svg></div>
+        </div>
+        <div class="server" data-i="1">
+          <div class="radio"></div><div class="flag">🇩🇪</div><div class="sname">Germany</div><div class="proto">VMESS</div><div class="lat">602 ms</div><div class="star"><svg viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3Z"/></svg></div>
+        </div>
+        <div class="server" data-i="2">
+          <div class="radio"></div><div class="flag">🇫🇮</div><div class="sname">Finland</div><div class="proto">VMESS</div><div class="lat">604 ms</div><div class="star"><svg viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3Z"/></svg></div>
+        </div>
+        <div class="server" data-i="3">
+          <div class="radio"></div><div class="flag">🇳🇱</div><div class="sname">Netherlands</div><div class="proto">VLESS</div><div class="lat">610 ms</div><div class="star"><svg viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3Z"/></svg></div>
+        </div>
+        <div class="server" data-i="4">
+          <div class="radio"></div><div class="flag">🇺🇸</div><div class="sname">United States</div><div class="proto">VMESS</div><div class="lat">617 ms</div><div class="star"><svg viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3Z"/></svg></div>
+        </div>
+        <div class="server" data-i="5">
+          <div class="radio"></div><div class="flag">🇺🇸</div><div class="sname">United States</div><div class="proto">VMESS</div><div class="lat">625 ms</div><div class="star"><svg viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3Z"/></svg></div>
+        </div>
+        <div class="server" data-i="6">
+          <div class="radio"></div><div class="flag">🇪🇸</div><div class="sname">Spain</div><div class="proto">VLESS</div><div class="lat">642 ms</div><div class="star"><svg viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3Z"/></svg></div>
+        </div>
+        <div class="server" data-i="7">
+          <div class="radio"></div><div class="flag">🇺🇸</div><div class="sname">United States</div><div class="proto">VMESS</div><div class="lat">657 ms</div><div class="star"><svg viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3Z"/></svg></div>
+        </div>
+        <div class="server" data-i="8">
+          <div class="radio"></div><div class="flag">🇪🇸</div><div class="sname">Spain</div><div class="proto">VLESS</div><div class="lat">663 ms</div><div class="star"><svg viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3Z"/></svg></div>
+        </div>
+        <div class="server" data-i="9">
+          <div class="radio"></div><div class="flag">🇯🇵</div><div class="sname">Japan</div><div class="proto">VMESS</div><div class="lat">681 ms</div><div class="star"><svg viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3Z"/></svg></div>
+        </div>
+        <div class="scrollbar"><i></i></div>
+      </div>
+
+      <div class="q-foot">
+        <div class="ver"><i></i><span>v1.0.0</span></div>
+        <div class="gbtn"><svg class="ic" viewBox="0 0 24 24"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.9a3.4 3.4 0 0 0-.9-2.6c3.1-.4 6.4-1.5 6.4-7A5.4 5.4 0 0 0 20 4.8 5.1 5.1 0 0 0 19.9 1S18.7.6 16 2.5a13.4 13.4 0 0 0-7 0C6.3.6 5.1 1 5.1 1A5.1 5.1 0 0 0 5 4.8a5.4 5.4 0 0 0-1.5 3.8c0 5.4 3.3 6.6 6.4 7A3.4 3.4 0 0 0 9 18.1V22"/></svg></div>
+        <div class="settings"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg><span>Settings</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- features -->
+  <div id="features">
+    <div id="feat-kicker"><span>UNDER THE HOOD</span><span class="ln"></span></div>
+    <div id="feat-title">Built to stay<br>connected.</div>
+    <div id="feat-list">
+      <div class="feat">
+        <div class="fic"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3c1.7.9 3.5 1.2 5 1.2v4.4c0 3.8-2.2 6.4-5 7.8-2.8-1.4-5-4-5-7.8V4.2C8.5 4.2 10.3 3.9 12 3Z"/><path d="m9.5 8.5 5 5"/><path d="m14.5 8.5-5 5"/></svg></div>
+        <div><h3>Kill switch</h3><p>Nothing leaves the tunnel. Fail-closed, enforced with nftables.</p></div>
+        <div class="fnum">01</div>
+      </div>
+      <div class="feat">
+        <div class="fic"><svg class="ic" viewBox="0 0 24 24"><path d="M4 8h16M4 16h16"/><circle cx="8" cy="8" r="2" fill="#0f0f14"/><circle cx="16" cy="16" r="2" fill="#0f0f14"/></svg></div>
+        <div><h3>TUN mode</h3><p>Every app, not just browsers. Or stay in system-proxy mode.</p></div>
+        <div class="fnum">02</div>
+      </div>
+      <div class="feat">
+        <div class="fic"><svg class="ic" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg></div>
+        <div><h3>Auto-reconnect</h3><p>Core exit, dead tunnel, network change — Qurp brings it back.</p></div>
+        <div class="fnum">03</div>
+      </div>
+      <div class="feat">
+        <div class="fic"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="6" rx="2"/><rect x="3" y="14" width="18" height="6" rx="2"/><path d="M7 7h.01M7 17h.01"/></svg></div>
+        <div><h3>DNS leak protection</h3><p>Queries stay inside. Custom DNS, always on in TUN mode.</p></div>
+        <div class="fnum">04</div>
+      </div>
+      <div class="feat">
+        <div class="fic"><svg class="ic" viewBox="0 0 24 24"><circle cx="5" cy="6" r="2"/><circle cx="19" cy="18" r="2"/><path d="M7 6h7a4 4 0 0 1 4 4v6"/><path d="M5 8v8a2 2 0 0 0 2 2h10"/></svg></div>
+        <div><h3>Routing rules</h3><p>Direct or block by domain, IP range and app. Includes ir-bypass.</p></div>
+        <div class="fnum">05</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- finale -->
+  <div id="brand-ghost">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width=".22" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 3c1.7.9 3.5 1.2 5 1.2v4.4c0 3.8-2.2 6.4-5 7.8-2.8-1.4-5-4-5-7.8V4.2C8.5 4.2 10.3 3.9 12 3Z"/>
+      <circle cx="12" cy="10" r="1.2"/>
+      <path d="M8 13.2h8"/><path d="M12 11.3v1.9"/>
+      <circle cx="12" cy="12" r="9.4" stroke-dasharray="1.2 1.6"/>
+      <circle cx="12" cy="12" r="11.3" stroke-dasharray=".5 2.4"/>
+    </svg>
+  </div>
+  <div id="fade"></div>
+  <div id="finale">
+    <div id="launch">
+      <div id="end-logo">
+        <svg viewBox="0 0 100 100">
+          <defs><linearGradient id="lg2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#45d58b"/><stop offset="1" stop-color="#1e8450"/></linearGradient></defs>
+          <circle cx="50" cy="50" r="48" fill="url(#lg2)"/>
+          <circle cx="50" cy="50" r="48" fill="none" stroke="rgba(255,255,255,.30)" stroke-width="1.5"/>
+          <g fill="none" stroke="#fff" stroke-width="5.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M50 23c7.7 4.2 16 5.8 24.5 5.8v20.8c0 14.8-10.2 24.7-24.5 30.6C35.7 74.3 25.5 64.4 25.5 49.6V28.8C34 28.8 42.3 27.2 50 23Z"/>
+            <circle cx="50" cy="57.5" r="5" fill="#fff" stroke="none"/>
+            <path d="M33 68.2h34"/>
+            <path d="M50 62.5v5.7"/>
+          </g>
+        </svg>
+      </div>
+      <div id="end-word">Qurp</div>
+      <div id="end-tag">One click. <em>Whole system.</em></div>
+      <div id="install">
+        <span class="lbl">INSTALL</span>
+        <span class="cmd">./install.sh --install-core</span>
+        <span class="copy"><svg class="ic" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg></span>
+      </div>
+      <div id="end-url"><span>github.com</span><span class="slash">/</span><span>1xpwn</span><span class="slash">/</span><span>qurp</span></div>
+      <div id="end-badges">
+        <div class="badge green"><span style="width:5px;height:5px;border-radius:50%;background:#57e389"></span>sing-box</div>
+        <div class="badge">GNOME 46–50</div>
+        <div class="badge">GPL-3.0</div>
+        <div class="badge">No telemetry</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="ring"></div>
+  <div id="ripple"></div>
+  <div id="cursor">
+    <svg viewBox="0 0 26 32"><path d="M2 2v23.2l6.1-5.6 4.1 9.6 4.2-1.8-4.1-9.4h8.1L2 2Z" fill="#fff" stroke="#111" stroke-width="1.5" stroke-linejoin="round"/></svg>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const clamp01 = x => Math.max(0, Math.min(1, x));
+const seg = (t,a,b) => clamp01((t-a)/(b-a));
+const lerp = (a,b,t) => a+(b-a)*t;
+const easeOut = x => 1-Math.pow(1-x,3);
+const easeOutQuint = x => 1-Math.pow(1-x,5);
+const easeInOut = x => x<.5 ? 4*x*x*x : 1-Math.pow(-2*x+2,3)/2;
+const easeOutBack = x => {const c1=1.70158,c3=c1+1;return 1+c3*Math.pow(x-1,3)+c1*Math.pow(x-1,2);};
+const smooth = (a,b,x) => {const t=clamp01((x-a)/(b-a));return t*t*(3-2*t);};
+
+const DURATION = 13.0;
+const panel = $('panel'), qs = $('qs'), qurp = $('qurp');
+const intro = $('intro'), caption = $('caption'), features = $('features'), finale = $('finale');
+const cursor = $('cursor'), ripple = $('ripple'), ring = $('ring'), flash = $('connect-flash');
+const hero = $('hero'), connectBtn = $('connect-btn');
+const topbar = $('topbar');
+const serverRows = [...document.querySelectorAll('.server')];
+
+// deterministic particles
+const pts = [];
+let seed = 1337;
+const rnd = () => { seed = (seed*1664525+1013904223)>>>0; return seed/4294967296; };
+for (let i=0;i<30;i++) {
+  const el = document.createElement('div');
+  el.className='pt';
+  const x = 60+rnd()*1480, y=40+rnd()*820, s=.6+rnd()*1.5;
+  el.style.width = el.style.height = s+'px';
+  el.style.left = x+'px'; el.style.top = y+'px';
+  el.style.opacity = (0.12+rnd()*0.35).toFixed(2);
+  $('particles').appendChild(el);
+  pts.push({el,x,y,ph:rnd()*6.283,sp:1.5+rnd()*3});
+}
+
+// text state helpers
+const setText = (el, txt) => { if (el.textContent !== txt) el.textContent = txt; };
+const centerOf = el => {
+  const r = el.getBoundingClientRect();
+  return {x:r.left+r.width/2, y:r.top+r.height/2};
+};
+const cursorAt = (x,y) => { cursor.style.transform = `translate(${x}px,${y}px) scale(1)`; };
+
+// screenshot mode: stop any transitions that could make frames nondeterministic
+function setStyles(t) {
+  const introIn = easeOut(clamp01(t/1.0));
+  const introOut = smooth(2.2,2.75,t);
+  const panelIn = easeOutBack(seg(t,2.52,3.18));
+  const panelOut = smooth(9.8,10.35,t);
+  const morph = easeInOut(seg(t,3.86,4.48));
+  const qurpIn = smooth(4.02,4.5,t);
+  const qsOut = smooth(3.86,4.18,t);
+  const zoom = 1 + 0.12*easeInOut(seg(t,4.55,5.35,t)) - 0.09*easeInOut(seg(t,7.55,8.3,t));
+  const featIn = smooth(7.65,8.05,t);
+  const featOut = smooth(9.55,9.95,t);
+  const finIn = smooth(9.78,10.45,t);
+  const finOut = smooth(12.55,12.95,t);
+
+  // background
+  $('bg').style.transform = `scale(${1.06 - 0.035*easeOut(clamp01(t/6))})`;
+  $('aurora-a').style.opacity = 0.68 + 0.18*Math.sin(t*0.55);
+  $('aurora-b').style.opacity = 0.42 + 0.22*smooth(5.8,7.2,t);
+  $('aurora-c').style.opacity = 0.4;
+
+  pts.forEach((p,i) => {
+    const drift = Math.sin(t*0.22*p.sp + p.ph)*22;
+    const drift2 = Math.cos(t*0.17*p.sp + p.ph)*14;
+    p.el.style.transform = `translate(${drift}px,${drift2}px)`;
+    p.el.style.opacity = (0.10 + 0.16*(0.5+0.5*Math.sin(t*0.5+p.ph))).toFixed(3);
+  });
+
+  // brand watermark / fade
+  const ghostOut = smooth(2.05,2.6,t);
+  const ghost = $('brand-ghost');
+  ghost.style.opacity = (smooth(0.25,1.1,t)*(1-ghostOut)).toFixed(3);
+  ghost.style.transform = `translateY(${(1-easeOut(clamp01(t/1.2)))*24}px) rotate(${-8+t*0.6}deg)`;
+  $('fade').style.opacity = String(1-smooth(0.05,0.55,t));
+
+  // topbar
+  topbar.style.opacity = (smooth(2.35,2.7,t) * (1-smooth(9.9,10.3,t))).toFixed(3);
+
+  // intro
+  intro.style.opacity = (introIn*(1-introOut)).toFixed(3);
+  intro.style.transform = `translateY(${(1-introIn)*26 - introOut*18}px)`;
+  $('eyebrow').style.opacity = smooth(0.05,0.55,t).toFixed(3);
+  $('brandline').style.opacity = smooth(0.12,0.72,t).toFixed(3);
+  $('brandline').style.transform = `translateY(${(1-easeOut(seg(t,0.12,0.8)))*30}px)`;
+  $('tagline').style.opacity = smooth(0.45,1.0,t).toFixed(3);
+  $('tagline').style.transform = `translateY(${(1-easeOut(seg(t,0.45,1.05)))*20}px)`;
+  $('chips').style.opacity = smooth(0.85,1.35,t).toFixed(3);
+  $('chips').style.transform = `translateY(${(1-easeOut(seg(t,0.85,1.4)))*16}px)`;
+  $('meta').style.opacity = (0.9*smooth(1.2,1.75,t)).toFixed(3);
+
+  // panel geometry + entrance
+  const h = lerp(320, 748, morph);
+  const enterX = (1-panelIn)*190;
+  const exitX = panelOut*520;
+  const py = -panelOut*30;
+  panel.style.height = h.toFixed(2)+'px';
+  panel.style.opacity = (0.001 + 0.999*clamp01(panelIn)*(1-panelOut)).toFixed(3);
+  panel.style.transform = `translateX(${enterX+exitX}px) translateY(${py}px) scale(${(0.965 + 0.035*panelIn)*zoom*(1-panelOut*0.03)})`;
+  panel.style.boxShadow = `0 50px 110px rgba(0,0,0,.66), 0 8px 28px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.06), 0 0 ${80*connectedGlow(t)}px rgba(46,194,126,${0.22*connectedGlow(t)})`;
+
+  qs.style.opacity = (1-qsOut).toFixed(3);
+  qs.style.transform = `translateY(${-10*qsOut}px)`;
+  qurp.style.opacity = qurpIn.toFixed(3);
+  qurp.style.transform = `translateY(${(1-qurpIn)*12}px)`;
+
+  // qs state
+  setText($('qs-state'), t >= 6.95 ? 'Germany' : 'Off');
+  $('qurp-toggle').classList.toggle('active', t >= 6.95);
+
+  // qurp live indicator
+  $('q-live').style.opacity = (t >= 6.95 ? smooth(6.95,7.3,t) : 0).toFixed(3);
+
+  // selection / connection state
+  const selected = t >= 5.62;
+  serverRows.forEach((r,i) => {
+    r.classList.toggle('selected', (selected && i===1) || (!selected && i===0));
+    r.style.background = (selected && i===1) ? 'rgba(46,194,126,.12)' : 'transparent';
+  });
+  const hoverRow = t >= 5.06 && t < 5.62;
+  if (hoverRow) serverRows[1].style.background = 'rgba(255,255,255,.07)';
+
+  const connected = t >= 6.95;
+  const connecting = t >= 6.10 && t < 6.95;
+  setText($('hero-country'), selected ? 'Germany' : 'Netherlands');
+  setText($('hero-flag'), selected ? '🇩🇪' : '🇳🇱');
+  setText($('hero-ip'), selected ? '45.90.28.14' : '212.80.221.168');
+  setText($('hero-lat'), connected ? '89 ms' : (selected ? '602 ms' : '628 ms'));
+  setText($('hero-speed'), connected ? '4.8 MB/s' : '0 B/s');
+  setText($('connect-label'), connected ? 'Disconnect' : (connecting ? 'Connecting' : 'Connect'));
+  $('spinner').style.display = connecting ? 'block' : 'none';
+  $('spinner').style.transform = `rotate(${(t*720)%360}deg)`;
+  connectBtn.style.color = connected ? 'rgba(255,125,125,.95)' : 'var(--green-3)';
+  connectBtn.style.borderColor = connected ? 'rgba(255,110,110,.35)' : 'rgba(87,227,137,.34)';
+  connectBtn.style.background = connected ? 'rgba(255,90,90,.09)' : 'rgba(255,255,255,.10)';
+  connectBtn.style.width = connecting ? '100px' : '88px';
+  connectBtn.style.flexBasis = connecting ? '100px' : '88px';
+  $('hero-glow').style.opacity = String(0.55 + 0.45*connectedGlow(t));
+  hero.style.borderColor = `rgba(87,227,137,${0.27 + 0.35*connectedGlow(t)})`;
+
+  // connect flash + ring
+  const cg = connectedGlow(t);
+  flash.style.opacity = (0.55*cg).toFixed(3);
+  ring.style.opacity = 0;
+
+  // caption 1 / 2
+  const cap1 = smooth(2.65,3.05,t)*(1-smooth(4.65,5.0,t));
+  const cap2 = smooth(4.95,5.35,t)*(1-smooth(7.35,7.7,t));
+  if (t < 5) { setText($('cap-num'),'01'); setText($('cap-text'),'Lives in Quick Settings'); }
+  else { setText($('cap-num'),'02'); setText($('cap-text'),'Pick a server. Connect.'); }
+  caption.style.opacity = Math.max(cap1,cap2).toFixed(3);
+  caption.style.transform = `translateY(${(1-Math.max(cap1,cap2))*12}px)`;
+
+  // features
+  features.style.opacity = (featIn*(1-featOut)).toFixed(3);
+  features.style.transform = `translateY(${(1-featIn)*20}px)`;
+  [...document.querySelectorAll('.feat')].forEach((el,i) => {
+    const fi = easeOut(seg(t,7.78+i*0.13,8.26+i*0.13));
+    el.style.opacity = fi.toFixed(3);
+    el.style.transform = `translateX(${(1-fi)*-26}px)`;
+  });
+
+  // finale
+  finale.style.opacity = (finIn*(1-finOut)).toFixed(3);
+  const launchScale = 0.955 + 0.045*easeOut(seg(t,9.78,10.55));
+  $('launch').style.transform = `scale(${launchScale})`;
+  $('end-logo').style.transform = `translateY(${(1-easeOut(seg(t,10.0,10.7)))*18}px)`;
+  $('end-logo').style.opacity = smooth(10.0,10.6,t).toFixed(3);
+  $('end-word').style.opacity = smooth(10.12,10.7,t).toFixed(3);
+  $('end-word').style.transform = `translateY(${(1-easeOut(seg(t,10.12,10.78)))*18}px)`;
+  $('end-tag').style.opacity = smooth(10.35,10.95,t).toFixed(3);
+  $('install').style.opacity = smooth(10.55,11.15,t).toFixed(3);
+  $('install').style.transform = `translateY(${(1-easeOut(seg(t,10.55,11.2)))*14}px)`;
+  $('end-url').style.opacity = smooth(10.75,11.32,t).toFixed(3);
+  $('end-badges').style.opacity = smooth(10.95,11.55,t).toFixed(3);
+  $('launch').style.boxShadow = `0 50px 120px rgba(0,0,0,.55), 0 0 ${110+25*Math.sin(t*1.4)}px rgba(46,194,126,.10), inset 0 1px 0 rgba(255,255,255,.08)`;
+  const finFade = smooth(12.55,12.98,t);
+  $('fade').style.opacity = String(Math.max(1-smooth(0.05,0.55,t), finFade));
+
+  // cursor choreography
+  let cx=0, cy=0, co=0, cs=1;
+  const tile = $('qurp-toggle');
+  if (t >= 2.98 && t < 4.25) {
+    const p = centerOf(tile);
+    const m = easeInOut(seg(t,2.98,3.48));
+    cx = lerp(820, p.x, m);
+    cy = lerp(560, p.y, m) - Math.sin(m*Math.PI)*45;
+    co = smooth(2.98,3.18,t)*(1-smooth(3.95,4.25,t));
+    cs = 0.82+0.18*smooth(2.98,3.25,t);
+  } else if (t >= 5.04 && t < 6.32) {
+    const rowP = centerOf(serverRows[1]);
+    const btnP = centerOf(connectBtn);
+    if (t < 5.7) {
+      const m = easeInOut(seg(t,5.04,5.5));
+      cx = lerp(rowP.x-260,rowP.x,m); cy = lerp(rowP.y-72,rowP.y,m)-Math.sin(m*Math.PI)*22;
+      co = smooth(5.04,5.2,t);
+      cs = 0.82+0.18*smooth(5.04,5.28,t);
+    } else {
+      const m = easeInOut(seg(t,5.7,6.12));
+      cx = lerp(rowP.x,btnP.x,m); cy = lerp(rowP.y,btnP.y,m)+Math.sin(m*Math.PI)*26;
+      co = 1-smooth(6.2,6.35,t);
+      cs = 1;
+    }
+  }
+  cursor.style.transform = `translate(${cx}px,${cy}px) scale(${cs})`;
+  cursor.style.opacity = co.toFixed(3);
+
+  // click ripples
+  const clicks = [
+    {t:3.58, el:tile},
+    {t:5.60, el:serverRows[1]},
+    {t:6.10, el:connectBtn},
+  ];
+  let rip = 0, rp = null;
+  for (const c of clicks) {
+    const k = seg(t,c.t,c.t+0.42);
+    if (k>0 && k<1) { rip = 1-k; rp = centerOf(c.el); }
+  }
+  if (rp) {
+    ripple.style.opacity = (0.9*rip).toFixed(3);
+    ripple.style.left = rp.x+'px'; ripple.style.top = rp.y+'px';
+    ripple.style.transform = `scale(${0.25+1.25*(1-rip)})`;
+  } else ripple.style.opacity = 0;
+
+  // press feedback
+  const press = (el, when) => {
+    const a = seg(t,when-0.03,when+0.02), b = seg(t,when+0.02,when+0.18);
+    const v = a*(1-b);
+    el.style.filter = v>0.01 ? `brightness(${1+0.18*v})` : '';
+  };
+  press(tile,3.58); press(serverRows[1],5.60); press(connectBtn,6.10);
+
+}
+
+function connectedGlow(t) {
+  const rise = smooth(6.86,7.15,t);
+  const fall = 1-smooth(9.8,10.25,t);
+  const pulse = 0.78 + 0.22*Math.sin((t-6.9)*2.2);
+  return rise*fall*pulse;
+}
+
+// initial frame and live preview
+window.renderAt = setStyles;
+window.__duration = DURATION;
+setStyles(0);
+if (new URLSearchParams(location.search).has('play')) {
+  const start = performance.now();
+  const loop = now => { setStyles(((now-start)/1000)%DURATION); requestAnimationFrame(loop); };
+  requestAnimationFrame(loop);
+}
+// wait for fonts and images before capture
+window.__ready = document.fonts.ready.then(() => new Promise(res => {
+  const img = new Image();
+  img.onload = img.onerror = () => requestAnimationFrame(() => requestAnimationFrame(res));
+  img.src = 'backdrop.jpg';
+}));
+</script>
+</body>
+</html>

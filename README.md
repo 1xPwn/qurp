@@ -5,10 +5,21 @@ A Linux extension for **GNOME Shell**, built into the Quick Settings panel and p
 
 > English | [Persian](README.fa.md)
 
+<p align="center">
+  <img src="assets/qurp-demo.gif" alt="Qurp demo: open GNOME Quick Settings, pick a server, connect through sing-box, and keep the tunnel alive with the kill switch, TUN mode, DNS protection and routing rules." width="100%">
+</p>
+
+<p align="center"><sub>Qurp 1.0 · GNOME 46–50 · powered by sing-box · GPL-3.0</sub></p>
+
+<details>
+<summary>Static screenshots</summary>
 
 ![Qurp panel, overview](<Screenshot From 2026-10-11 06-39-31.png>)
 ![Qurp panel, one subscription open](<Screenshot From 2026-10-11 06-37-13.png>)
-![When the qurp connected! ](<Screenshot From 2026-10-11 06-39-12.png>)
+![When the qurp connected!](<Screenshot From 2026-10-11 06-39-12.png>)
+
+</details>
+
 ## Features
 
 - **Protocols:** VLESS (TCP, WebSocket, gRPC, HTTP/2, HTTPUpgrade; TLS and Reality), VMess, Trojan,
@@ -26,6 +37,44 @@ A Linux extension for **GNOME Shell**, built into the Quick Settings panel and p
   *Settings → General*. Subscriptions open one at a time and the server list fits your screen.
 - **Updates:** a version chip in the panel turns red when a newer release is on GitHub (checked about twice a day).
 - **Languages:** English, Persian (right-to-left layout) and Chinese.
+
+## How it works
+
+Qurp is a native GNOME Shell front-end for sing-box — it does not reimplement any proxy protocols itself.
+
+```text
+GNOME Shell / Quick Settings
+        │  extension.js (GJS)
+        ▼
+  subscriptions + settings                ~/.config/qurp
+        │
+        ▼
+  private runtime config  ── sing-box check ──►  sing-box run
+        │                                          │
+        │                                          ├─ mixed inbound 127.0.0.1:2080 ─► system proxy
+        │                                          └─ TUN qurp0 (auto_route) ──────► all traffic
+        ▼
+  optional kill switch: nftables via qurp-helper, fail-closed
+```
+
+1. **Subscriptions become outbounds.** Qurp downloads your subscription and accepts a plain list of links,
+   base64 (including URL-safe) or a sing-box JSON document. Each server is normalized into a sing-box
+   outbound; traffic and expiry are shown when the provider sends a `subscription-userinfo` header.
+2. **Connect builds one config.** On connect, Qurp writes a private, single-purpose config to
+   `$XDG_RUNTIME_DIR`, validates it with `sing-box check`, then starts `sing-box run`. The config contains a
+   local mixed inbound on `127.0.0.1:2080` (port configurable), DNS rules, your routing rules, and — in TUN
+   mode — a `qurp0` TUN inbound.
+3. **Two ways to route.** In *system proxy* mode Qurp points GNOME's proxy settings at the local inbound and
+   saves your previous proxy configuration so it can restore it on disconnect. In *TUN* mode sing-box creates
+   `qurp0` with `auto_route`, so every application — not only proxy-aware ones — goes through the tunnel.
+4. **The kill switch is fail-closed.** When enabled, the optional `qurp-helper` (invoked through polkit)
+   installs an nftables table. Only the tunnel, the server address, local ranges and DHCP may leave; plain
+   DNS and DNS-over-TLS are dropped outside the tunnel. If the rules cannot be applied, Qurp aborts the
+   connection instead of leaking.
+5. **The shell stays in charge.** A watchdog watches the core process, probes the local inbound, and listens
+   for network changes. If the core exits, the tunnel dies or the network moves, Qurp reconnects; it can also
+   connect automatically at login. There is no telemetry, and destination domains stay out of the log at the
+   default `warn` level.
 
 ## Requirements
 

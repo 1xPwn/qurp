@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Qurp — social card</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:1280px;height:640px;overflow:hidden;background:#08060c}
+  body{font-family:Cantarell,"Noto Sans","DejaVu Sans",sans-serif;color:#fff;-webkit-font-smoothing:antialiased}
+  #stage{position:relative;width:1280px;height:640px;overflow:hidden;background:#0b0712}
+  #bg{position:absolute;inset:-8%;background:url("backdrop.jpg") center/cover no-repeat;filter:brightness(.56) saturate(1.08) blur(1.4px);transform:scale(1.08)}
+  #tint{position:absolute;inset:0;background:
+    radial-gradient(700px 520px at 80% 38%,rgba(46,194,126,.16),transparent 65%),
+    linear-gradient(90deg,rgba(8,5,13,.96) 0%,rgba(8,5,13,.82) 42%,rgba(8,5,13,.28) 100%),
+    linear-gradient(0deg,rgba(7,4,12,.82),transparent 55%)}
+  #glow{position:absolute;width:900px;height:900px;right:-300px;top:-280px;border-radius:50%;background:radial-gradient(circle,rgba(46,194,126,.20),rgba(46,194,126,0) 66%);filter:blur(100px)}
+  #vignette{position:absolute;inset:0;background:radial-gradient(ellipse at 48% 46%,transparent 42%,rgba(0,0,0,.48) 100%)}
+  .ic{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+  #left{position:absolute;left:72px;top:98px;width:690px}
+  #eyebrow{display:flex;align-items:center;gap:9px;font-size:10.5px;font-weight:700;letter-spacing:.22em;color:rgba(255,255,255,.55)}
+  #eyebrow i{width:6px;height:6px;border-radius:50%;background:#57e389;box-shadow:0 0 12px rgba(87,227,137,.9)}
+  #brand{display:flex;align-items:center;gap:16px;margin-top:18px}
+  #logo{width:76px;height:76px;filter:drop-shadow(0 10px 30px rgba(46,194,126,.35))}
+  #word{font-size:92px;line-height:.88;font-weight:800;letter-spacing:-4px}
+  #tag{margin-top:20px;font-size:31px;line-height:1.2;font-weight:500;letter-spacing:-.5px;max-width:650px;color:rgba(255,255,255,.94)}
+  #tag em{font-style:normal;color:#8ff0b0;font-weight:700}
+  #url{margin-top:26px;display:inline-flex;align-items:center;gap:10px;height:42px;padding:0 16px;border-radius:12px;border:1px solid rgba(87,227,137,.28);background:rgba(46,194,126,.08);font-size:17px;font-weight:600;color:rgba(255,255,255,.93)}
+  #url span{color:#57e389}
+  #url svg{width:15px;height:15px;color:#8ff0b0}
+  #badges{display:flex;gap:8px;margin-top:18px;flex-wrap:wrap}
+  .badge{height:27px;padding:0 11px;border-radius:14px;border:1px solid rgba(255,255,255,.13);background:rgba(255,255,255,.05);display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:600;color:rgba(255,255,255,.60)}
+  .badge.green{border-color:rgba(87,227,137,.28);background:rgba(46,194,126,.08);color:#9df5bd}
+  .badge .dot{width:5px;height:5px;border-radius:50%;background:#57e389}
+
+  #right{position:absolute;right:60px;top:120px;width:430px;height:410px}
+  #panel{
+    position:absolute;right:0;top:0;width:390px;border-radius:26px;padding:18px;
+    background:linear-gradient(180deg,rgba(38,37,43,.96),rgba(24,23,29,.96));
+    border:1px solid rgba(255,255,255,.13);
+    box-shadow:0 40px 90px rgba(0,0,0,.62), 0 0 80px rgba(46,194,126,.16), inset 0 1px 0 rgba(255,255,255,.08);
+    transform:rotate(-1.4deg);
+  }
+  .p-head{display:flex;align-items:center;gap:10px}
+  .p-logo{width:42px;height:42px;border-radius:50%;background:linear-gradient(145deg,#3dcb83,#218a52);display:flex;align-items:center;justify-content:center;box-shadow:0 5px 18px rgba(46,194,126,.28),inset 0 1px 0 rgba(255,255,255,.3)}
+  .p-logo svg{width:24px;height:24px;color:#fff}
+  .p-head b{font-size:17px;line-height:1.05;display:block}
+  .p-head small{font-size:10px;color:rgba(255,255,255,.5)}
+  .live{margin-left:auto;font-size:8.5px;font-weight:800;letter-spacing:.12em;color:#8ff0b0;display:flex;align-items:center;gap:4px}
+  .live i{width:5px;height:5px;border-radius:50%;background:#57e389;box-shadow:0 0 8px #57e389}
+  .hero{margin-top:13px;border-radius:16px;padding:13px;background:linear-gradient(135deg,rgba(46,194,126,.13),rgba(255,255,255,.04));border:1px solid rgba(87,227,137,.34);box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
+  .hero .country{display:flex;align-items:center;gap:8px;font-size:18px;font-weight:700}
+  .flag{font-family:"Noto Color Emoji";font-size:18px}
+  .hero .meta{margin-top:4px;font-size:11px;color:rgba(255,255,255,.56)}
+  .hero .meta b{color:rgba(255,255,255,.9)}
+  .hero .state{margin-top:9px;display:inline-flex;align-items:center;gap:6px;height:23px;padding:0 9px;border-radius:12px;background:rgba(46,194,126,.14);border:1px solid rgba(87,227,137,.25);font-size:9.5px;font-weight:700;color:#9df5bd}
+  .state i{width:5px;height:5px;border-radius:50%;background:#57e389;box-shadow:0 0 7px #57e389}
+  .row{margin-top:9px;height:34px;border-radius:9px;display:flex;align-items:center;gap:8px;padding:0 7px;background:rgba(255,255,255,.055);font-size:11px;color:rgba(255,255,255,.62)}
+  .row b{font-weight:700;color:rgba(255,255,255,.85);margin-right:auto}
+  .row svg{width:12px;height:12px;color:rgba(255,255,255,.45)}
+  .row .pill{font-size:8px;font-weight:800;letter-spacing:.06em;color:#8ff0b0;border:1px solid rgba(87,227,137,.25);border-radius:5px;padding:2px 5px}
+
+  .float{position:absolute;display:flex;align-items:center;gap:7px;height:34px;white-space:nowrap;padding:0 12px;border-radius:17px;background:rgba(20,19,25,.88);border:1px solid rgba(255,255,255,.13);box-shadow:0 12px 30px rgba(0,0,0,.4);font-size:10.5px;font-weight:600;color:rgba(255,255,255,.76)}
+  .float svg{width:13px;height:13px;color:#8ff0b0}
+  .f1{right:438px;top:16px;transform:rotate(3deg);z-index:2}
+  .f2{right:-14px;bottom:34px;transform:rotate(2deg)}
+  .f3{right:238px;bottom:-18px;transform:rotate(-3deg)}
+
+  #caption{position:absolute;right:82px;bottom:52px;font-size:11px;font-weight:700;letter-spacing:.18em;color:rgba(255,255,255,.34)}
+  #caption b{color:#57e389}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="bg"></div><div id="glow"></div><div id="tint"></div><div id="vignette"></div>
+
+  <div id="left">
+    <div id="eyebrow"><i></i><span>GNOME SHELL EXTENSION</span></div>
+    <div id="brand">
+      <div id="logo">
+        <svg viewBox="0 0 100 100">
+          <defs><linearGradient id="l1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#43d489"/><stop offset="1" stop-color="#1f8550"/></linearGradient></defs>
+          <circle cx="50" cy="50" r="48" fill="url(#l1)"/>
+          <circle cx="50" cy="50" r="48" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="1.5"/>
+          <g fill="none" stroke="#fff" stroke-width="5.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M50 23c7.7 4.2 16 5.8 24.5 5.8v20.8c0 14.8-10.2 24.7-24.5 30.6C35.7 74.3 25.5 64.4 25.5 49.6V28.8C34 28.8 42.3 27.2 50 23Z"/>
+            <circle cx="50" cy="57.5" r="5" fill="#fff" stroke="none"/>
+            <path d="M33 68.2h34"/><path d="M50 62.5v5.7"/>
+          </g>
+        </svg>
+      </div>
+      <div id="word">Qurp</div>
+    </div>
+    <div id="tag">A proxy client that lives<br>in your <em>Quick Settings.</em></div>
+    <div id="url"><svg class="ic" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1.5-1.5"/></svg><span class="urltext"><span>github.com</span>/1xpwn/qurp</span></div>
+    <div id="badges">
+      <div class="badge green"><span class="dot"></span>sing-box</div>
+      <div class="badge">GNOME 46–50</div>
+      <div class="badge">GPL-3.0</div>
+      <div class="badge">No telemetry</div>
+    </div>
+  </div>
+
+  <div id="right">
+    <div class="float f1"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3c1.7.9 3.5 1.2 5 1.2v4.4c0 3.8-2.2 6.4-5 7.8-2.8-1.4-5-4-5-7.8V4.2C8.5 4.2 10.3 3.9 12 3Z"/><path d="m9.5 8.5 5 5"/><path d="m14.5 8.5-5 5"/></svg>Kill switch</div>
+    <div class="float f2"><svg class="ic" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg>Auto-reconnect</div>
+    <div class="float f3"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="6" rx="2"/><rect x="3" y="14" width="18" height="6" rx="2"/></svg>DNS protection</div>
+
+    <div id="panel">
+      <div class="p-head">
+        <div class="p-logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c1.7.9 3.5 1.2 5 1.2v4.4c0 3.8-2.2 6.4-5 7.8-2.8-1.4-5-4-5-7.8V4.2C8.5 4.2 10.3 3.9 12 3Z"/><circle cx="12" cy="10" r="1.2" fill="currentColor" stroke="none"/><path d="M8 13.2h8"/><path d="M12 11.3v1.9"/></svg></div>
+        <div><b>Qurp</b><small>Proxy client</small></div>
+        <div class="live"><i></i>LIVE</div>
+      </div>
+      <div class="hero">
+        <div class="country"><span class="flag">🇩🇪</span>Germany</div>
+        <div class="meta"><b>89 ms</b> · 4.8 MB/s · <span style="opacity:.7">45.90.28.14</span></div>
+        <div class="state"><i></i>Connected · TUN</div>
+      </div>
+      <div class="row"><b>VLESS</b><span>Reality · TLS</span><span class="pill">READY</span></div>
+      <div class="row"><b>Subscriptions</b><span>2 active</span><svg class="ic" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></div>
+      <div class="row"><b>Routing</b><span>ir-bypass</span><svg class="ic" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></div>
+    </div>
+  </div>
+
+  <div id="caption"><b>QURP</b> &nbsp;·&nbsp; QUICK SETTINGS, CONNECTED</div>
+</div>
+</body>
+</html>

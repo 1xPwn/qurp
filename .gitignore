@@ -6,3 +6,7 @@ schemas/gschemas.compiled
 .vscode/
 .idea/
 node_modules/
+
+# demo build output
+demo/frames/
+demo/gif-frames/
